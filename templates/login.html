@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 60vh;">
+    <div class="col-md-5 col-lg-4">
+        
+        <div class="card-modern p-5 fade-in-up">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 64px; height: 64px;">
+                    <i class="fa-solid fa-shield-halved fa-xl"></i>
+                </div>
+                <h3 class="fw-bold text-dark">Welcome Back</h3>
+                <p class="text-muted small">Please enter your credentials to access the dashboard.</p>
+            </div>
+
+            <form method="POST">
+                <div class="mb-4">
+                    <label class="form-label text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted ps-3">
+                            <i class="fa-solid fa-key"></i>
+                        </span>
+                        <input type="password" name="password" class="form-control border-start-0 ps-3 py-2 shadow-none" placeholder="••••••••" required style="border-color: #e2e8f0;">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary-custom w-100 py-2 fw-bold shadow-sm">
+                    Sign In <i class="fa-solid fa-arrow-right ms-2" style="font-size: 0.8em;"></i>
+                </button>
+            </form>
+        </div>
+
+        <div class="text-center mt-4 fade-in-up" style="animation-delay: 0.1s;">
+            <a href="/" class="text-decoration-none text-muted small fw-medium">
+                <i class="fa-solid fa-arrow-left me-1"></i> Return to Leaderboard
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

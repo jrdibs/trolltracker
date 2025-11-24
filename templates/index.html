@@ -1,1 +1,278 @@
+{% extends 'base.html' %}
+{% block content %}
 
+<div class="row mb-4 fade-in-up">
+    <div class="col-12">
+    </div>
+</div>
+
+<div class="row fade-in-up" style="animation-delay: 0.1s;">
+    <div class="col-lg-8 mb-4">
+        <div class="card-modern p-4 h-100 position-relative">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h5 class="fw-bold mb-1">Troll of the Year</h5>
+                    <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.05em;">2026 Race</div>
+                </div>
+                <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-normal">
+                    <i class="text-warning me-1"></i>Updated Daily
+                </span>
+            </div>
+            
+            <div style="position: relative; height: 450px; width: 100%">
+                <canvas id="trollChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        <div class="card-modern h-100 d-flex flex-column">
+            <div class="p-4 border-bottom bg-light bg-opacity-25">
+                <h5 class="fw-bold mb-3">Monthly Breakdown</h5>
+                
+                <div class="position-relative">
+                    <i class="fa-regular fa-calendar position-absolute text-muted" style="top: 50%; transform: translateY(-50%); left: 15px;"></i>
+                    <select class="form-select border-0 shadow-sm py-2 ps-5 fw-semibold text-dark" id="monthSelector" style="background-color: #fff; cursor: pointer;">
+                        </select>
+                </div>
+            </div>
+            
+            <div class="flex-grow-1 p-0">
+                <div class="d-flex justify-content-between px-4 py-2 mt-2 text-muted small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">
+                    <span>Rank & Name</span>
+                    <span>Score</span>
+                </div>
+                <ul class="list-group list-group-flush" id="monthlyStandingsList">
+                    <li class="list-group-item text-center text-muted py-5 border-0">
+                        <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // --- 1. Data Setup ---
+    const rawData = {{ chart_data|safe }};
+    const monthlyWinners = {{ monthly_winners|safe }};
+    let contendersList = {{ contenders|safe }};
+    
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const shortMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // Determine available months
+    let winnerIndices = Object.keys(monthlyWinners).map(Number);
+    const availableMonthIndices = winnerIndices.length > 0 ? winnerIndices.sort((a, b) => a - b) : [];
+
+    // --- 2. Chart Logic (Refined for Aesthetics) ---
+    
+    // Prepare Data
+    let sortedData = contendersList.map(name => {
+        const scores = rawData[name];
+        const total = scores.reduce((acc, curr) => acc + curr, 0);
+        return { name: name, scores: scores, total: total };
+    });
+    // Sort by total
+    sortedData.sort((a, b) => b.total - a.total);
+    const sortedContenders = sortedData.map(item => item.name);
+
+    // Professional Palette (SaaS Colors)
+    const palette = [
+        '#6366f1', // Indigo
+        '#ec4899', // Pink
+        '#10b981', // Emerald
+        '#f59e0b', // Amber
+        '#3b82f6', // Blue
+        '#8b5cf6', // Violet
+        '#14b8a6', // Teal
+        '#f97316', // Orange
+        '#06b6d4', // Cyan
+        '#64748b'  // Slate
+    ];
+
+    const ctx = document.getElementById('trollChart').getContext('2d');
+
+    const datasets = shortMonthNames.map((month, monthIndex) => {
+        const dataForMonth = sortedContenders.map(name => rawData[name][monthIndex]);
+        
+        // Logic: Highlight monthly winners with a border, but keep it subtle
+        const borderColors = sortedContenders.map(name => 
+            (monthlyWinners[monthIndex + ""] === name) ? '#000' : 'transparent'
+        );
+        const borderWidths = sortedContenders.map(name => 
+            (monthlyWinners[monthIndex + ""] === name) ? 2 : 0
+        );
+
+        return {
+            label: month,
+            data: dataForMonth,
+            backgroundColor: palette[monthIndex % palette.length], // Cycle through nice colors
+            borderColor: borderColors,
+            borderWidth: borderWidths,
+            barPercentage: 0.6,
+            categoryPercentage: 0.8,
+            borderRadius: 4, // Modern rounded bars
+        };
+    });
+
+    // Custom Plugin for Totals
+    const totalLabelPlugin = {
+        id: 'totalLabelPlugin',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.getDatasetMeta(datasets.length - 1).data.forEach((lastBar, index) => {
+                const totalValue = sortedData[index].total;
+                if(totalValue > 0) {
+                    const xPos = lastBar.x + 8; 
+                    const yPos = lastBar.y + 5;
+                    ctx.save();
+                    ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
+                    ctx.fillStyle = '#1e293b'; // Slate 800
+                    ctx.textAlign = 'left';
+                    ctx.fillText(totalValue, xPos, yPos);
+                    ctx.restore();
+                }
+            });
+        }
+    };
+
+    // Modern Chart Config
+    new Chart(ctx, {
+        type: 'bar',
+        data: { labels: sortedContenders, datasets: datasets },
+        options: {
+            indexAxis: 'y',
+            responsive: true, 
+            maintainAspectRatio: false,
+            layout: { padding: { right: 50, left: 0 } },
+            plugins: {
+                legend: { 
+                    position: 'bottom', 
+                    labels: { 
+                        usePointStyle: true, 
+                        pointStyle: 'circle',
+                        padding: 20,
+                        font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 }
+                    } 
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)', // Dark slate tooltip
+                    titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13 },
+                    bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false
+                }
+            },
+            scales: {
+                x: { 
+                    stacked: true, 
+                    grid: { display: false, drawBorder: false },
+                    ticks: { display: false } // Hide x axis numbers for cleaner look
+                }, 
+                y: { 
+                    stacked: true, 
+                    grid: { display: false, drawBorder: false },
+                    ticks: { 
+                        font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600' },
+                        color: '#64748b'
+                    }
+                } 
+            }
+        },
+        plugins: [totalLabelPlugin]
+    });
+
+    // --- 3. Standings Logic (Refined UI) ---
+
+    const standingsList = document.getElementById('monthlyStandingsList');
+    const monthSelector = document.getElementById('monthSelector');
+
+    function renderMonthlyStandings(monthIndex) {
+        standingsList.innerHTML = ''; 
+        
+        if (monthIndex === null || monthIndex === undefined || monthIndex < 0) {
+            standingsList.innerHTML = '<li class="list-group-item text-center text-muted py-5 border-0">Select a month to view data.</li>';
+            return;
+        }
+
+        // Calculate data
+        let monthlyStandings = contendersList.map(name => {
+            const score = rawData[name][monthIndex] !== undefined ? rawData[name][monthIndex] : 0;
+            return { name: name, score: score };
+        });
+
+        monthlyStandings.sort((a, b) => b.score - a.score);
+        monthlyStandings = monthlyStandings.filter(item => item.score > 0);
+
+        if (monthlyStandings.length === 0) {
+             standingsList.innerHTML = `<li class="list-group-item text-center text-muted py-5 border-0 small">No activity recorded for ${monthNames[monthIndex]}.</li>`;
+             return;
+        }
+
+        // Render Rows
+        monthlyStandings.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = "list-group-item d-flex justify-content-between align-items-center px-4 py-3 border-0 border-bottom";
+            
+            // Ranking Styling
+            let rankBadge = '';
+            let rankClass = 'text-muted fw-semibold small';
+            
+            if (index === 0) {
+                // Gold styling
+                rankBadge = '<i class="fa-solid fa-crown text-warning me-3"></i>';
+                rankClass = 'text-dark fw-bold';
+            } else if (index === 1) {
+                rankBadge = '<span class="me-3 text-secondary fw-bold" style="width:20px; text-align:center">2</span>';
+            } else if (index === 2) {
+                rankBadge = '<span class="me-3 text-secondary fw-bold" style="width:20px; text-align:center">3</span>';
+            } else {
+                rankBadge = `<span class="me-3 text-muted small" style="width:20px; text-align:center">${index + 1}</span>`;
+            }
+
+            li.innerHTML = `
+                <div class="d-flex align-items-center">
+                    ${rankBadge}
+                    <span class="${rankClass}">${item.name}</span>
+                </div>
+                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3" style="font-size: 0.85em;">${item.score}</span>
+            `;
+            standingsList.appendChild(li);
+        });
+    }
+
+    // --- 4. Initialization ---
+    
+    // Populate Dropdown
+    if (availableMonthIndices.length === 0) {
+        monthSelector.innerHTML = '<option value="-1">No data available</option>';
+        monthSelector.disabled = true;
+        renderMonthlyStandings(-1);
+    } else {
+        availableMonthIndices.forEach(index => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = monthNames[index]; // Full month name
+            monthSelector.appendChild(option);
+        });
+
+        // Auto-select logic
+        const currentDate = new Date();
+        const currentMonthIndex = currentDate.getMonth(); 
+        let defaultIndex = availableMonthIndices.includes(currentMonthIndex) 
+            ? currentMonthIndex 
+            : availableMonthIndices[availableMonthIndices.length - 1];
+
+        monthSelector.value = defaultIndex;
+        renderMonthlyStandings(defaultIndex);
+    }
+    
+    monthSelector.addEventListener('change', (e) => {
+        renderMonthlyStandings(parseInt(e.target.value));
+    });
+
+</script>
+{% endblock %}

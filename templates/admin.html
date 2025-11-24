@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="row mb-4 fade-in-up">
+    <div class="col-12">
+    </div>
+</div>
+
+<div class="row justify-content-center fade-in-up" style="animation-delay: 0.1s;">
+    <div class="col-lg-10">
+        <div class="card-modern p-4 p-md-5">
+            
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div>
+                    <h5 class="fw-bold mb-0">Log New Activity</h5>
+                    <small class="text-muted">Fill in the details below to update the tracker.</small>
+                </div>
+            </div>
+
+            <form method="POST">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <label class="form-label text-uppercase text-muted fw-bold small mb-2">Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border text-muted">
+                                <i class="fa-solid fa-user"></i>
+                            </span>
+                            <select name="name" class="form-select border shadow-sm py-2" style="cursor: pointer;">
+                                {% for person in contenders %}
+                                    <option value="{{ person }}">{{ person }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label text-uppercase text-muted fw-bold small mb-2">Trolls</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border text-muted">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                            </span>
+                            <input type="number" name="count" class="form-control border shadow-sm py-2" value="1" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label text-uppercase text-muted fw-bold small mb-2">Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border text-muted">
+                                <i class="fa-regular fa-calendar"></i>
+                            </span>
+                            <input type="date" name="date" class="form-control border shadow-sm py-2" 
+                                   value="{{ request.args.get('date') }}" id="datePicker" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary-custom px-5 py-2 fw-bold">
+                        <i class="fa-solid fa-check me-2"></i> Submit Entry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Logic: If the server didn't provide a date (via request args), default to today (client-side)
+    const datePicker = document.getElementById('datePicker');
+    if (!datePicker.value) {
+        datePicker.valueAsDate = new Date();
+    }
+</script>
+{% endblock %}
